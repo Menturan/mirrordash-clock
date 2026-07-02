@@ -1,12 +1,159 @@
-<div class="clock-container">
+<div class="clock-container" id="clock-module-container"
+     data-format="{{ format }}"
+     data-show-seconds="{{ show_seconds|lower }}"
+     data-lang="{{ lang }}"
+     data-timezone="{{ timezone }}"
+     data-date-format="{{ date_format }}">
     {% if show_header and translations and translations.title %}
     <h2 class="module-header" style="margin-bottom: 5px;">{{ translations.title }}</h2>
     {% endif %}
     <div class="clock-time">
-        <span class="clock-hm">{{ hm_str }}</span>{% if s_str %}<span class="clock-s">{{ s_str }}</span>{% endif %}{% if ampm_str %}<span class="clock-ampm">{{ ampm_str }}</span>{% endif %}
+        <span class="clock-hm">--:--</span>{% if show_seconds %}<span class="clock-s">::--</span>{% endif %}{% if format == "12h" %}<span class="clock-ampm">--</span>{% endif %}
     </div>
-    <div class="clock-date">{{ date_str }}</div>
+    <div class="clock-date">Loading...</div>
 </div>
+
+<script>
+(function() {
+    const currentScript = document.currentScript;
+    const shadow = currentScript ? currentScript.getRootNode() : null;
+    const clockModule = document.querySelector('[data-module="mirrordash_clock"]');
+    const container = (shadow && shadow.querySelector) ? shadow.querySelector('.clock-container') : (clockModule && clockModule.shadowRoot ? clockModule.shadowRoot.querySelector('.clock-container') : null);
+    if (!container) return;
+    
+    // Clear existing timer if any
+    if (window.mirrordashClockInterval) {
+        clearInterval(window.mirrordashClockInterval);
+    }
+
+    const format = container.getAttribute('data-format');
+    const showSeconds = container.getAttribute('data-show-seconds') === 'true';
+    const lang = container.getAttribute('data-lang');
+    const timezone = container.getAttribute('data-timezone');
+    const dateFormat = container.getAttribute('data-date-format') || 'full';
+
+    const hmEl = container.querySelector('.clock-hm');
+    const sEl = container.querySelector('.clock-s');
+    const ampmEl = container.querySelector('.clock-ampm');
+    const dateEl = container.querySelector('.clock-date');
+
+    // Create datetime formatter options
+    const timeOptions = {
+        timeZone: timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: format === '12h'
+    };
+
+    let timeFormatter;
+    try {
+        timeFormatter = new Intl.DateTimeFormat(lang, timeOptions);
+    } catch (e) {
+        console.warn('Clock module: Invalid locale or timezone, falling back to defaults.', e);
+        timeFormatter = new Intl.DateTimeFormat(undefined, timeOptions);
+    }
+
+    let dateFormatter;
+    if (dateFormat !== 'yyyy-MM-dd') {
+        try {
+            dateFormatter = new Intl.DateTimeFormat(lang, {
+                timeZone: timezone,
+                dateStyle: dateFormat
+            });
+        } catch (e) {
+            console.warn('Clock module: Invalid locale or timezone for date, falling back to defaults.', e);
+            dateFormatter = new Intl.DateTimeFormat(undefined, {
+                dateStyle: dateFormat
+            });
+        }
+    }
+
+    function updateClock() {
+        const now = new Date();
+        
+        let hmStr = '--:--';
+        let sStr = '';
+        let ampmStr = '';
+
+        try {
+            const parts = timeFormatter.formatToParts(now);
+            let hour = '';
+            let minute = '';
+            let dayPeriod = '';
+
+            for (const part of parts) {
+                if (part.type === 'hour') hour = part.value;
+                else if (part.type === 'minute') minute = part.value;
+                else if (part.type === 'dayPeriod') dayPeriod = part.value;
+            }
+
+            if (hour && minute) {
+                if (hour.length === 1) hour = '0' + hour;
+                if (minute.length === 1) minute = '0' + minute;
+                hmStr = `${hour}:${minute}`;
+            } else {
+                throw new Error('Incomplete time parts');
+            }
+            if (format === '12h') {
+                ampmStr = dayPeriod;
+            }
+        } catch (e) {
+            // Fallback
+            hmStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        if (showSeconds) {
+            sStr = ':' + String(now.getSeconds()).padStart(2, '0');
+        }
+
+        if (hmEl) hmEl.textContent = hmStr;
+        if (sEl) sEl.textContent = sStr;
+        if (ampmEl) ampmEl.textContent = ampmStr;
+
+        // Date formatting
+        let dateStr = 'Loading...';
+        if (dateFormat === 'yyyy-MM-dd') {
+            try {
+                const dateParts = new Intl.DateTimeFormat('en-US', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    timeZone: timezone
+                }).formatToParts(now);
+
+                let year = '';
+                let month = '';
+                let day = '';
+                for (const part of dateParts) {
+                    if (part.type === 'year') year = part.value;
+                    else if (part.type === 'month') month = part.value;
+                    else if (part.type === 'day') day = part.value;
+                }
+                dateStr = `${year}-${month}-${day}`;
+            } catch (e) {
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                dateStr = `${year}-${month}-${day}`;
+            }
+        } else if (dateFormatter) {
+            try {
+                dateStr = dateFormatter.format(now);
+                if (dateStr) {
+                    dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+                }
+            } catch (e) {
+                dateStr = now.toDateString();
+            }
+        }
+
+        if (dateEl) dateEl.textContent = dateStr;
+    }
+
+    updateClock();
+    window.mirrordashClockInterval = setInterval(updateClock, showSeconds ? 1000 : 10000);
+})();
+</script>
 
 <style>
 .clock-container {
