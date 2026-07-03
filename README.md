@@ -18,3 +18,6 @@ uv pip install -e .
 ## Screenshot
 
 ![Clock Widget Screenshot](screenshot.png)
+
+## License
+[PolyForm Noncommercial License 1.0.0](LICENSE.md)
