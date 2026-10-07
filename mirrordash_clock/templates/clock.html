@@ -15,16 +15,10 @@
 
 <script>
 (function() {
-    const currentScript = document.currentScript;
-    const shadow = currentScript ? currentScript.getRootNode() : null;
-    const clockModule = document.querySelector('[data-module="mirrordash_clock"]');
-    const container = (shadow && shadow.querySelector) ? shadow.querySelector('.clock-container') : (clockModule && clockModule.shadowRoot ? clockModule.shadowRoot.querySelector('.clock-container') : null);
+    // `root` is this instance's shadow root, given by the MirrorDash core; it survives re-renders
+    const container = root.querySelector('.clock-container');
     if (!container) return;
-    
-    // Clear existing timer if any
-    if (window.mirrordashClockInterval) {
-        clearInterval(window.mirrordashClockInterval);
-    }
+    clearInterval(root._clockTimer);
 
     const format = container.getAttribute('data-format');
     const showSeconds = container.getAttribute('data-show-seconds') === 'true';
@@ -151,7 +145,7 @@
     }
 
     updateClock();
-    window.mirrordashClockInterval = setInterval(updateClock, showSeconds ? 1000 : 10000);
+    root._clockTimer = setInterval(updateClock, showSeconds ? 1000 : 10000);
 })();
 </script>
 

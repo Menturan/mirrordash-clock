@@ -2,29 +2,6 @@
     "title": "Clock",
     "description": "Displays the current time and date in a premium look.",
     "properties": {
-        "enabled": {
-            "type": "boolean",
-            "default": true,
-            "title": "Enabled",
-            "description": "Show or hide the clock module on the screen."
-        },
-        "position": {
-            "type": "string",
-            "default": "middle_center",
-            "enum": [
-                "top_left",
-                "top_center",
-                "top_right",
-                "middle_left",
-                "middle_center",
-                "middle_right",
-                "bottom_left",
-                "bottom_center",
-                "bottom_right"
-            ],
-            "title": "Screen Position",
-            "description": "Which section of the screen the clock is rendered in."
-        },
         "format": {
             "type": "string",
             "default": "24h",
