@@ -11,9 +11,10 @@ Clock and date widget with 12h/24h formatting, localizations, and sleek layout s
 
 ## Installation
 
-```bash
-uv pip install -e .
-```
+On the mirror's admin page, open **Modules**: the module is in the list, install it with one click.
+Or paste `git+https://github.com/Menturan/mirrordash-clock.git` under **Modules → Install a Module from GitHub**.
+
+Developing it: `uv run pytest` runs its tests, and `uvx mirrordash-sdk validate .` checks it.
 
 ## Screenshot
 

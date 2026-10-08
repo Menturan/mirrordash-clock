@@ -8,7 +8,7 @@
     <h2 class="module-header" style="margin-bottom: 5px;">{{ translations.title }}</h2>
     {% endif %}
     <div class="clock-time">
-        <span class="clock-hm">--:--</span>{% if show_seconds %}<span class="clock-s">::--</span>{% endif %}{% if format == "12h" %}<span class="clock-ampm">--</span>{% endif %}
+        <span class="clock-hm display-xl">--:--</span>{% if show_seconds %}<span class="clock-s headline-md text-dimmed">::--</span>{% endif %}{% if format == "12h" %}<span class="clock-ampm">--</span>{% endif %}
     </div>
     <div class="clock-date">Loading...</div>
 </div>
@@ -162,19 +162,8 @@
     align-items: baseline;
 }
 
-.clock-hm {
-    font-size: 75px;
-    font-weight: 100;
-    line-height: 1.0;
-    letter-spacing: -0.04em;
-    color: var(--color-high-contrast, #ffffff);
-}
-
+/* The time is .display-xl and the seconds .headline-md .text-dimmed (modules.css) */
 .clock-s {
-    font-size: 32px;
-    font-weight: 500;
-    line-height: 1.2;
-    color: var(--color-dimmed-charcoal, #666666);
     margin-left: 2px;
 }
 

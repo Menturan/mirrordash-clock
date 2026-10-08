@@ -2,13 +2,18 @@
 name = "mirrordash-clock"
 version = "0.1.1"
 description = "Clock module for MirrorDash"
-dependencies = [
-    "jinja2",
-    "babel"
-]
+requires-python = ">=3.14"
+# The mirror provides the rest (rendering, fetch_json, translations); add only what plugin.py imports
+dependencies = []
 
 [project.entry-points."mirrordash.modules"]
 mirrordash_clock = "mirrordash_clock.plugin:ClockModule"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
 
 [build-system]
 requires = ["hatchling"]
