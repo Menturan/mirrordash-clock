@@ -62,6 +62,11 @@
         }
     }
 
+    // Only touch text that changed: rewriting the thin digits every second makes them shimmer
+    function setText(el, text) {
+        if (el && el.textContent !== text) el.textContent = text;
+    }
+
     function updateClock() {
         const now = new Date();
         
@@ -100,9 +105,9 @@
             sStr = ':' + String(now.getSeconds()).padStart(2, '0');
         }
 
-        if (hmEl) hmEl.textContent = hmStr;
-        if (sEl) sEl.textContent = sStr;
-        if (ampmEl) ampmEl.textContent = ampmStr;
+        setText(hmEl, hmStr);
+        setText(sEl, sStr);
+        setText(ampmEl, ampmStr);
 
         // Date formatting
         let dateStr = 'Loading...';
@@ -141,7 +146,7 @@
             }
         }
 
-        if (dateEl) dateEl.textContent = dateStr;
+        setText(dateEl, dateStr);
     }
 
     updateClock();
@@ -155,6 +160,8 @@
     flex-direction: column;
     align-items: flex-end;
     text-align: right;
+    /* Every digit the same width, so the right-aligned time never shifts sideways when it changes */
+    font-variant-numeric: tabular-nums;
 }
 
 .clock-time {
