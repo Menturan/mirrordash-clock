@@ -3,7 +3,7 @@
 Clock and date widget with 12h/24h formatting, localizations, and sleek layout sizes for MirrorDash.
 
 ## Features
-- Ten looks: Classic (the default), Minimal, Stacked, Words ("kvart över tre"), Weekday first, Seconds line, and the analog Hands only, Station clock, Dots and Rings.
+- Ten looks: Classic (the default), Minimal, Stacked, Words ("kvart över tre"), Weekday first, Seconds line, and the analog Hands only, Bold markers, Dots and Rings.
 - Its own timezone per clock (empty uses the mirror's), optionally shown as city, abbreviation or offset.
 - Displays current time and date in customizable formats.
 - Supports 12-hour or 24-hour modes.

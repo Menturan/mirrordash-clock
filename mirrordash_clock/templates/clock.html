@@ -142,21 +142,20 @@
             return turner(h, m, s);
         },
         station(svg) {
+            // Dots for the minutes, bars for the hours, doubled at 12, 3, 6 and 9: its own face, not the Swiss railway clock's
             for (let i = 0; i < 60; i++) {
-                const big = i % 5 === 0;
-                el(svg, 'line', { class: big ? 'high butt' : 'dim butt', x1: 0, y1: -96, x2: 0, y2: big ? -78 : -90,
-                    'stroke-width': big ? 4.5 : 1.2, transform: `rotate(${i * 6})` });
+                const a = i * 6;
+                if (i % 5) {
+                    el(svg, 'circle', { class: 'fill-dim', cy: -93, r: 1, transform: `rotate(${a})` });
+                } else {
+                    (i % 15 ? [0] : [-2.5, 2.5]).forEach(x => el(svg, 'line', { class: 'high butt', x1: x, y1: -96, x2: x, y2: -84,
+                        'stroke-width': 3, transform: `rotate(${a})` }));
+                }
             }
-            const h = hand(svg, 'high butt hand-h', 14, 54, 7);
-            const m = hand(svg, 'high butt hand-m', 16, 86, 5);
-            let s = null;
-            if (showSeconds) {
-                // The station clock's red disc, in gray: colour reads as noise through the glass
-                s = el(svg, 'g', { class: 'hand-s' });
-                el(s, 'line', { class: 'gray', x1: 0, y1: 24, x2: 0, y2: -62, 'stroke-width': 1.5 });
-                el(s, 'circle', { class: 'fill-gray', cy: -62, r: 6.5 });
-            }
-            el(svg, 'circle', { class: 'fill-void', r: 2.5 });
+            const h = hand(svg, 'high hand-h', 10, 54, 6);
+            const m = hand(svg, 'high hand-m', 12, 82, 4);
+            const s = showSeconds ? hand(svg, 'gray hand-s', 18, 84, 1.2) : null;
+            el(svg, 'circle', { class: 'fill-void', r: 1.8 });
             return turner(h, m, s);
         },
         dots(svg) {

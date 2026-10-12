@@ -6,7 +6,7 @@
             "type": "string",
             "default": "classic",
             "enum": ["classic", "minimal", "stacked", "words", "dayfirst", "secline", "analog-minimal", "station", "dots", "rings"],
-            "enum_titles": ["Classic", "Minimal (time only)", "Stacked (hours over minutes)", "Words (quarter past three)", "Weekday first", "Seconds line", "Analog: hands only", "Analog: station clock", "Analog: dots", "Analog: rings"],
+            "enum_titles": ["Classic", "Minimal (time only)", "Stacked (hours over minutes)", "Words (quarter past three)", "Weekday first", "Seconds line", "Analog: hands only", "Analog: bold markers", "Analog: dots", "Analog: rings"],
             "title": "Look",
             "description": "How the clock looks. Minimal shows neither seconds nor date, Weekday first has its own date."
         },
