@@ -13,6 +13,9 @@ mirrordash_clock = "mirrordash_clock.plugin:ClockModule"
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
+    # The look tests render clock.html as the mirror does and run it in a real browser
+    "jinja2==3.1.6",
+    "playwright==1.61.0",
 ]
 
 [build-system]

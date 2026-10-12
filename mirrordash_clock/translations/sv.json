@@ -1,3 +1,10 @@
 {
-  "title": "Klocka"
+  "title": "Klocka",
+  "words": {
+    "hours": ["tolv", "ett", "två", "tre", "fyra", "fem", "sex", "sju", "åtta", "nio", "tio", "elva"],
+    "phrases": [
+      ["klockan är", 0], ["fem över", 0], ["tio över", 0], ["kvart över", 0], ["tjugo över", 0], ["fem i halv", 1],
+      ["halv", 1], ["fem över halv", 1], ["tjugo i", 1], ["kvart i", 1], ["tio i", 1], ["fem i", 1], ["klockan är", 1]
+    ]
+  }
 }

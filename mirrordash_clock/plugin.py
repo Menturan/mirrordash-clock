@@ -8,7 +8,8 @@ class ClockModule:
         self.config = config
         self.name = "mirrordash_clock"
         global_cfg = config.get("globals", {})
-        
+        self.style = config.get("style", "classic")
+
         # Fallback format: check instance config first, then global config
         self.format = config.get("format") or global_cfg.get("time_format", "24h")
         self.show_seconds = config.get("show_seconds", True)
@@ -31,6 +32,7 @@ class ClockModule:
             # Render the static clock container template once
             html = self.render_template(
                 "clock.html",
+                style=self.style,
                 format=self.format,
                 show_seconds=self.show_seconds,
                 lang=self.lang,

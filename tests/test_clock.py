@@ -31,6 +31,7 @@ async def test_clock_module_run_loop():
         broadcast_mock.assert_called_once_with("mirrordash_clock", "<div>Clock Rendered</div>")
         clock.render_template.assert_called_once_with(
             "clock.html",
+            style="classic",
             format="24h",
             show_seconds=False,
             lang="sv",

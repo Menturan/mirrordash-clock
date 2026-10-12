@@ -1,3 +1,10 @@
 {
-  "title": "Clock"
+  "title": "Clock",
+  "words": {
+    "hours": ["twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven"],
+    "phrases": [
+      ["it's", 0], ["five past", 0], ["ten past", 0], ["quarter past", 0], ["twenty past", 0], ["twenty-five past", 0],
+      ["half past", 0], ["twenty-five to", 1], ["twenty to", 1], ["quarter to", 1], ["ten to", 1], ["five to", 1], ["it's", 1]
+    ]
+  }
 }

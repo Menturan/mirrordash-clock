@@ -1,4 +1,8 @@
-<div class="clock-container" id="clock-module-container"
+{% set style = style or "classic" %}
+{% set analog = style in ["analog-minimal", "station", "dots", "rings"] %}
+{% macro ampm() %}{% if format == "12h" %}<span class="clock-ampm">--</span>{% endif %}{% endmacro %}
+<div class="clock-container clock-style-{{ style }}{% if analog %} clock-analog{% endif %}" id="clock-module-container"
+     data-style="{{ style }}"
      data-format="{{ format }}"
      data-show-seconds="{{ show_seconds|lower }}"
      data-lang="{{ lang }}"
@@ -8,10 +12,33 @@
     {% if show_header and translations and translations.title %}
     <h2 class="module-header" style="margin-bottom: 5px;">{{ translations.title }}</h2>
     {% endif %}
+    {% if style == "minimal" %}
+    <div class="clock-time"><span class="clock-hm clock-huge">--:--</span>{{ ampm() }}</div>
+    {% elif style == "stacked" %}
+    <div class="clock-stack"><span class="clock-h">--</span><span class="clock-m">--</span></div>
+    {{ ampm() }}
+    <div class="clock-date"></div>
+    {% elif style == "words" %}
+    <span class="clock-w-lead"></span>
+    <span class="clock-w-hour"></span>
+    <span class="clock-date clock-hm">--:--</span>
+    <div class="clock-date"></div>
+    {% elif style == "dayfirst" %}
+    <span class="clock-weekday"></span>
+    <span class="clock-rest"><span class="clock-daymonth"></span> · <span class="clock-hm">--:--</span>{{ ampm() }}</span>
+    {% elif style == "secline" %}
+    <div class="clock-time"><span class="clock-hm display-xl">--:--</span>{{ ampm() }}</div>
+    {% if show_seconds %}<div class="clock-track"><div class="clock-fill"></div></div>{% endif %}
+    <div class="clock-date"></div>
+    {% elif analog %}
+    <svg class="clock-face" viewBox="-100 -100 200 200" role="img" aria-label="{{ translations.title if translations and translations.title else 'Clock' }}"></svg>
+    <div class="clock-date"></div>
+    {% else %}
     <div class="clock-time">
-        <span class="clock-hm display-xl">--:--</span>{% if show_seconds %}<span class="clock-s headline-md text-dimmed">::--</span>{% endif %}{% if format == "12h" %}<span class="clock-ampm">--</span>{% endif %}
+        <span class="clock-hm display-xl">--:--</span>{% if show_seconds %}<span class="clock-s headline-md text-dimmed">::--</span>{% endif %}{{ ampm() }}
     </div>
     <div class="clock-date">Loading...</div>
+    {% endif %}
     {% if timezone_display and timezone_display != "none" %}<div class="clock-tz"></div>{% endif %}
 </div>
 
@@ -22,161 +49,185 @@
     if (!container) return;
     clearInterval(root._clockTimer);
 
+    const style = container.getAttribute('data-style') || 'classic';
     const format = container.getAttribute('data-format');
     const showSeconds = container.getAttribute('data-show-seconds') === 'true';
     const lang = container.getAttribute('data-lang');
     const timezone = container.getAttribute('data-timezone');
     const dateFormat = container.getAttribute('data-date-format') || 'full';
-
-    const hmEl = container.querySelector('.clock-hm');
-    const sEl = container.querySelector('.clock-s');
-    const ampmEl = container.querySelector('.clock-ampm');
-    const dateEl = container.querySelector('.clock-date');
-    const tzEl = container.querySelector('.clock-tz');
     const tzDisplay = container.getAttribute('data-timezone-display') || 'none';
     const tzCity = (timezone || '').split('/').pop().replace(/_/g, ' ');
+    // Per language: [lead, 0 = this hour or 1 = the next] for every five minutes, and the twelve hour names
+    const WORDS = {{ (translations.words if translations and translations.words else none)|tojson }};
 
-    // The zone's name (EDT) or offset (GMT-4) right now, so it follows daylight saving
-    function tzName(style) {
+    // A formatter in this clock's language and timezone; an invalid one falls back to the browser's
+    function fmt(options) {
         try {
-            const part = new Intl.DateTimeFormat(lang, { timeZone: timezone, timeZoneName: style })
-                .formatToParts(new Date()).find(p => p.type === 'timeZoneName');
-            return part ? part.value : '';
+            return new Intl.DateTimeFormat(lang, Object.assign({ timeZone: timezone }, options));
         } catch (e) {
-            return '';
+            console.warn('Clock module: invalid locale or timezone, falling back to defaults.', e);
+            return new Intl.DateTimeFormat(undefined, options);
         }
     }
 
-    function tzText() {
+    const timeFormatter = fmt({ hour: '2-digit', minute: '2-digit', hour12: format === '12h' });
+    // The 24-hour hour and minute in this timezone, for the hands and the word clock
+    const clockFormatter = fmt({ hour: 'numeric', minute: 'numeric', hourCycle: 'h23' });
+    const dateFormatter = dateFormat === 'yyyy-MM-dd'
+        ? fmt({ year: 'numeric', month: '2-digit', day: '2-digit' })
+        : fmt({ dateStyle: dateFormat });
+    const weekdayFormatter = fmt({ weekday: 'long' });
+    const dayMonthFormatter = fmt({ day: 'numeric', month: 'long' });
+
+    function part(parts, type) {
+        const found = parts.find(p => p.type === type);
+        return found ? found.value : '';
+    }
+    const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
+    // The zone's name (EDT) or offset (GMT-4) right now, so it follows daylight saving
+    function tzName(now, style) {
+        return part(fmt({ timeZoneName: style }).formatToParts(now), 'timeZoneName');
+    }
+
+    function tzText(now) {
         if (tzDisplay === 'city') return tzCity;
-        if (tzDisplay === 'abbr') return tzName('short');
-        if (tzDisplay === 'offset') return tzName('shortOffset');
-        if (tzDisplay === 'city_abbr') return [tzCity, tzName('short')].filter(Boolean).join(' · ');
+        if (tzDisplay === 'abbr') return tzName(now, 'short');
+        if (tzDisplay === 'offset') return tzName(now, 'shortOffset');
+        if (tzDisplay === 'city_abbr') return [tzCity, tzName(now, 'short')].filter(Boolean).join(' · ');
         return '';
     }
 
-    // Create datetime formatter options
-    const timeOptions = {
-        timeZone: timezone,
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: format === '12h'
-    };
-
-    let timeFormatter;
-    try {
-        timeFormatter = new Intl.DateTimeFormat(lang, timeOptions);
-    } catch (e) {
-        console.warn('Clock module: Invalid locale or timezone, falling back to defaults.', e);
-        timeFormatter = new Intl.DateTimeFormat(undefined, timeOptions);
-    }
-
-    let dateFormatter;
-    if (dateFormat !== 'yyyy-MM-dd') {
-        try {
-            dateFormatter = new Intl.DateTimeFormat(lang, {
-                timeZone: timezone,
-                dateStyle: dateFormat
-            });
-        } catch (e) {
-            console.warn('Clock module: Invalid locale or timezone for date, falling back to defaults.', e);
-            dateFormatter = new Intl.DateTimeFormat(undefined, {
-                dateStyle: dateFormat
-            });
-        }
+    function dateText(now) {
+        const parts = dateFormatter.formatToParts(now);
+        if (dateFormat === 'yyyy-MM-dd') return `${part(parts, 'year')}-${part(parts, 'month')}-${part(parts, 'day')}`;
+        return cap(dateFormatter.format(now));
     }
 
     // Only touch text that changed: rewriting the thin digits every second makes them shimmer
     function setText(el, text) {
         if (el && el.textContent !== text) el.textContent = text;
     }
+    function setAll(selector, text) {
+        container.querySelectorAll(selector).forEach(el => setText(el, text));
+    }
+
+    // --- Analog faces: built once, then each returns how to move it ---
+    const SVG = 'http://www.w3.org/2000/svg';
+    function el(parent, name, attrs) {
+        const node = document.createElementNS(SVG, name);
+        for (const k in attrs) node.setAttribute(k, attrs[k]);
+        parent.appendChild(node);
+        return node;
+    }
+    // A hand from `back` behind the centre to `length` in front of it; `cls` sets its colour (see the CSS)
+    function hand(svg, cls, back, length, width) {
+        return el(svg, 'line', { class: cls, x1: 0, y1: back, x2: 0, y2: -length, 'stroke-width': width });
+    }
+    function turner(h, m, s) {
+        return (hd, md, sd) => {
+            h.setAttribute('transform', `rotate(${hd})`);
+            m.setAttribute('transform', `rotate(${md})`);
+            if (s) s.setAttribute('transform', `rotate(${sd})`);
+        };
+    }
+
+    const FACES = {
+        'analog-minimal'(svg) {
+            [0, 90, 180, 270].forEach(a => el(svg, 'line', { class: 'dim', x1: 0, y1: -92, x2: 0, y2: -86, 'stroke-width': 1.5, transform: `rotate(${a})` }));
+            const h = hand(svg, 'high hand-h', 0, 48, 3);
+            const m = hand(svg, 'high hand-m', 0, 78, 1.5);
+            const s = showSeconds ? hand(svg, 'dim hand-s', 12, 84, 1) : null;
+            el(svg, 'circle', { class: 'fill-high', r: 3 });
+            return turner(h, m, s);
+        },
+        station(svg) {
+            for (let i = 0; i < 60; i++) {
+                const big = i % 5 === 0;
+                el(svg, 'line', { class: big ? 'high butt' : 'dim butt', x1: 0, y1: -96, x2: 0, y2: big ? -78 : -90,
+                    'stroke-width': big ? 4.5 : 1.2, transform: `rotate(${i * 6})` });
+            }
+            const h = hand(svg, 'high butt hand-h', 14, 54, 7);
+            const m = hand(svg, 'high butt hand-m', 16, 86, 5);
+            let s = null;
+            if (showSeconds) {
+                // The station clock's red disc, in gray: colour reads as noise through the glass
+                s = el(svg, 'g', { class: 'hand-s' });
+                el(s, 'line', { class: 'gray', x1: 0, y1: 24, x2: 0, y2: -62, 'stroke-width': 1.5 });
+                el(s, 'circle', { class: 'fill-gray', cy: -62, r: 6.5 });
+            }
+            el(svg, 'circle', { class: 'fill-void', r: 2.5 });
+            return turner(h, m, s);
+        },
+        dots(svg) {
+            for (let i = 0; i < 12; i++) {
+                const a = i * Math.PI / 6;
+                el(svg, 'circle', { class: i === 0 ? 'fill-high' : 'fill-dim', cx: 84 * Math.sin(a), cy: -84 * Math.cos(a), r: i === 0 ? 4 : 2.6 });
+            }
+            const h = hand(svg, 'high hand-h', 0, 46, 2.2);
+            const m = hand(svg, 'high hand-m', 0, 72, 1.2);
+            const s = showSeconds ? el(svg, 'circle', { class: 'fill-gray hand-s', cy: -97, r: 2.4 }) : null;
+            el(svg, 'circle', { class: 'fill-high', r: 2.5 });
+            return turner(h, m, s);
+        },
+        rings(svg) {
+            // Seconds outermost and darkest, hours innermost and brightest
+            const rings = [[92, 2, 'dim', showSeconds], [80, 3, 'gray', true], [68, 4, 'high', true]].map(([r, w, cls, shown]) => {
+                if (!shown) return null;
+                el(svg, 'circle', { class: 'track', r, 'stroke-width': 1 });
+                const len = 2 * Math.PI * r;
+                const arc = el(svg, 'circle', { class: `${cls} ring`, r, 'stroke-width': w, 'stroke-dasharray': `0 ${len}`, transform: 'rotate(-90)' });
+                return { arc, len };
+            });
+            el(svg, 'text', { class: 'clock-hm ring-time', 'text-anchor': 'middle', 'dominant-baseline': 'central' }).textContent = '--:--';
+            return (hd, md, sd) => [sd, md, hd].forEach((deg, i) => {
+                if (rings[i]) rings[i].arc.setAttribute('stroke-dasharray', `${Math.max(deg / 360 * rings[i].len, 0.01)} ${rings[i].len}`);
+            });
+        }
+    };
+    const svg = container.querySelector('.clock-face');
+    const moveHands = svg && FACES[style] ? FACES[style](svg) : null;
+    const fill = container.querySelector('.clock-fill');
 
     function updateClock() {
         const now = new Date();
-        
-        let hmStr = '--:--';
-        let sStr = '';
-        let ampmStr = '';
-
-        try {
-            const parts = timeFormatter.formatToParts(now);
-            let hour = '';
-            let minute = '';
-            let dayPeriod = '';
-
-            for (const part of parts) {
-                if (part.type === 'hour') hour = part.value;
-                else if (part.type === 'minute') minute = part.value;
-                else if (part.type === 'dayPeriod') dayPeriod = part.value;
-            }
-
-            if (hour && minute) {
-                if (hour.length === 1) hour = '0' + hour;
-                if (minute.length === 1) minute = '0' + minute;
-                hmStr = `${hour}:${minute}`;
-            } else {
-                throw new Error('Incomplete time parts');
-            }
-            if (format === '12h') {
-                ampmStr = dayPeriod;
-            }
-        } catch (e) {
-            // Fallback
-            hmStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
+        const timeParts = timeFormatter.formatToParts(now);
+        const hour = part(timeParts, 'hour').padStart(2, '0');
+        const minute = part(timeParts, 'minute').padStart(2, '0');
+        const clockParts = clockFormatter.formatToParts(now);
+        const h24 = Number(part(clockParts, 'hour')) % 24;
+        const min = Number(part(clockParts, 'minute'));
         // ponytail: seconds come from local time; every timezone offset is whole minutes, so they match any zone
-        if (showSeconds) {
-            sStr = ':' + String(now.getSeconds()).padStart(2, '0');
+        const sec = now.getSeconds();
+
+        setAll('.clock-hm', `${hour}:${minute}`);
+        setAll('.clock-h', hour);
+        setAll('.clock-m', minute);
+        setAll('.clock-s', ':' + String(sec).padStart(2, '0'));
+        setAll('.clock-ampm', format === '12h' ? part(timeParts, 'dayPeriod') : '');
+        setAll('div.clock-date', dateText(now));
+        setAll('.clock-weekday', cap(weekdayFormatter.format(now)));
+        setAll('.clock-daymonth', dayMonthFormatter.format(now));
+        setAll('.clock-tz', tzText(now));
+
+        if (style === 'words' && WORDS) {
+            // To the nearest five minutes; 58 past rounds up to the next hour
+            const [lead, next] = WORDS.phrases[Math.round((min + sec / 60) / 5)];
+            setAll('.clock-w-lead', cap(lead));
+            setAll('.clock-w-hour', WORDS.hours[(h24 + next) % 12]);
         }
-
-        setText(hmEl, hmStr);
-        setText(sEl, sStr);
-        setText(ampmEl, ampmStr);
-
-        // Date formatting
-        let dateStr = 'Loading...';
-        if (dateFormat === 'yyyy-MM-dd') {
-            try {
-                const dateParts = new Intl.DateTimeFormat('en-US', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    timeZone: timezone
-                }).formatToParts(now);
-
-                let year = '';
-                let month = '';
-                let day = '';
-                for (const part of dateParts) {
-                    if (part.type === 'year') year = part.value;
-                    else if (part.type === 'month') month = part.value;
-                    else if (part.type === 'day') day = part.value;
-                }
-                dateStr = `${year}-${month}-${day}`;
-            } catch (e) {
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                dateStr = `${year}-${month}-${day}`;
-            }
-        } else if (dateFormatter) {
-            try {
-                dateStr = dateFormatter.format(now);
-                if (dateStr) {
-                    dateStr = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-                }
-            } catch (e) {
-                dateStr = now.toDateString();
-            }
+        if (fill) {
+            // The line fills over the minute; at :00 it snaps back instead of sliding
+            fill.style.transition = sec === 0 ? 'none' : '';
+            fill.style.width = (sec / 59 * 100).toFixed(2) + '%';
         }
-
-        setText(dateEl, dateStr);
-        setText(tzEl, tzText());
+        if (moveHands) moveHands((h24 % 12) * 30 + min * 0.5, min * 6 + sec * 0.1, sec * 6);
     }
 
     updateClock();
-    root._clockTimer = setInterval(updateClock, showSeconds ? 1000 : 10000);
+    // Tick every second only when something shows the seconds
+    const showsSeconds = showSeconds && (style === 'classic' || style === 'secline' || moveHands);
+    root._clockTimer = setInterval(updateClock, showsSeconds ? 1000 : 10000);
 })();
 </script>
 
@@ -219,5 +270,135 @@
     text-transform: uppercase;
     color: var(--color-standard-gray, #999999);
     margin-top: var(--label-gap, 8px);
+}
+
+/* --- minimal: only the time, larger and thinner --- */
+.clock-huge {
+    font-size: 112px;
+    font-weight: 100;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: var(--color-high-contrast, #ffffff);
+}
+
+/* --- stacked: hours over minutes --- */
+.clock-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+.clock-h, .clock-m {
+    font-size: 104px;
+    font-weight: 100;
+    line-height: 0.88;
+    letter-spacing: -0.05em;
+    color: var(--color-high-contrast, #ffffff);
+}
+.clock-m {
+    color: var(--color-standard-gray, #999999);
+}
+.clock-style-stacked .clock-ampm {
+    align-self: flex-end;
+    margin-top: 6px;
+}
+
+/* --- words: the time as it is said --- */
+.clock-w-lead {
+    font-size: 26px;
+    font-weight: 300;
+    color: var(--color-standard-gray, #999999);
+}
+.clock-w-hour {
+    font-size: 64px;
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--color-high-contrast, #ffffff);
+}
+.clock-style-words .clock-date.clock-hm {
+    margin-top: 12px;
+}
+
+/* --- dayfirst: the weekday large, the time small --- */
+.clock-weekday {
+    font-size: 64px;
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--color-high-contrast, #ffffff);
+}
+.clock-rest {
+    margin-top: 10px;
+    font-size: 20px;
+    color: var(--color-standard-gray, #999999);
+}
+.clock-rest .clock-hm {
+    color: var(--color-high-contrast, #ffffff);
+}
+.clock-rest .clock-ampm {
+    font-size: inherit;
+    padding: 0;
+    margin-left: 4px;
+}
+
+/* --- secline: the seconds as a line filling over the minute --- */
+.clock-style-secline {
+    align-items: stretch;
+}
+.clock-style-secline .clock-time {
+    justify-content: flex-end;
+}
+.clock-track {
+    position: relative;
+    height: 1px;
+    margin-top: 10px;
+    /* ponytail: a faint track, not a token; a lit pixel this dark barely shows through the glass */
+    background: #1f1f1f;
+}
+.clock-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    background: var(--color-high-contrast, #ffffff);
+    transition: width 1s linear;
+}
+@media (prefers-reduced-motion: reduce) {
+    .clock-fill { transition-duration: 2s; }
+}
+
+/* --- analog faces --- */
+.clock-analog {
+    align-items: center;
+    text-align: center;
+}
+.clock-analog .module-header {
+    align-self: stretch;
+}
+.clock-face {
+    width: 200px;
+    height: 200px;
+    overflow: visible;
+}
+.clock-face line, .clock-face .ring {
+    stroke-linecap: round;
+    fill: none;
+}
+.clock-face .butt { stroke-linecap: butt; }
+.clock-face .high { stroke: var(--color-high-contrast, #ffffff); }
+.clock-face .gray { stroke: var(--color-standard-gray, #999999); }
+.clock-face .dim { stroke: var(--color-dimmed-charcoal, #666666); }
+.clock-face .track { stroke: #1f1f1f; fill: none; }
+.clock-face .fill-high { fill: var(--color-high-contrast, #ffffff); }
+.clock-face .fill-gray { fill: var(--color-standard-gray, #999999); }
+.clock-face .fill-dim { fill: var(--color-dimmed-charcoal, #666666); }
+.clock-face .fill-void { fill: var(--color-void, #000000); }
+.clock-face .ring-time {
+    fill: var(--color-high-contrast, #ffffff);
+    font-size: 34px;
+    font-weight: 200;
+    letter-spacing: -1px;
+}
+.clock-analog > .clock-date {
+    margin-top: 18px;
 }
 </style>
