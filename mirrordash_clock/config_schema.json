@@ -27,6 +27,20 @@
             "enum": ["full", "long", "medium", "short", "yyyy-MM-dd"],
             "title": "Date Format",
             "description": "Localized date format style (full, long, medium, short) or a custom pattern."
+        },
+        "timezone": {
+            "type": "string",
+            "default": "",
+            "title": "Timezone",
+            "description": "Show the time in another timezone (e.g. America/New_York). Empty uses the system timezone."
+        },
+        "timezone_display": {
+            "type": "string",
+            "default": "none",
+            "enum": ["none", "city", "abbr", "offset", "city_abbr"],
+            "enum_titles": ["Hidden", "City (New York)", "Abbreviation (EDT)", "Offset (GMT-4)", "City and abbreviation"],
+            "title": "Show Timezone",
+            "description": "Show which timezone the clock is in, below the date."
         }
     }
 }

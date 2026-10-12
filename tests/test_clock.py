@@ -35,6 +35,16 @@ async def test_clock_module_run_loop():
             show_seconds=False,
             lang="sv",
             timezone="Europe/Stockholm",
+            timezone_display="none",
             date_format="full",
             show_header=True
         )
+
+
+def test_clock_own_timezone_wins_over_system():
+    config = {"globals": {"timezone": "Europe/Stockholm"}, "timezone": "America/New_York", "timezone_display": "city_abbr"}
+    clock = ClockModule(config)
+    assert clock.timezone_name == "America/New_York"
+    assert clock.timezone_display == "city_abbr"
+    # An empty field (the schema default) falls back to the system's timezone
+    assert ClockModule({"globals": {"timezone": "Europe/Stockholm"}, "timezone": ""}).timezone_name == "Europe/Stockholm"

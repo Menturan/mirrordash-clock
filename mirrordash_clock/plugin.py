@@ -18,8 +18,9 @@ class ClockModule:
         self.lang = global_cfg.get("language", "en")
         self.date_format = config.get("date_format", "full")
         
-        # Timezone configuration
-        self.timezone_name = global_cfg.get("timezone", "Europe/Stockholm")
+        # Timezone: this clock's own, else the system's
+        self.timezone_name = config.get("timezone") or global_cfg.get("timezone", "Europe/Stockholm")
+        self.timezone_display = config.get("timezone_display", "none")
             
         logger.info("Initializing ClockModule with format: %s, show_seconds: %s, lang: %s, date_format: %s, timezone: %s", 
                     self.format, self.show_seconds, self.lang, self.date_format, self.timezone_name)
@@ -34,6 +35,7 @@ class ClockModule:
                 show_seconds=self.show_seconds,
                 lang=self.lang,
                 timezone=self.timezone_name,
+                timezone_display=self.timezone_display,
                 date_format=self.date_format,
                 show_header=self.show_header
             )

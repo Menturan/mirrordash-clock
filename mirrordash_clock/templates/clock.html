@@ -3,7 +3,8 @@
      data-show-seconds="{{ show_seconds|lower }}"
      data-lang="{{ lang }}"
      data-timezone="{{ timezone }}"
-     data-date-format="{{ date_format }}">
+     data-date-format="{{ date_format }}"
+     data-timezone-display="{{ timezone_display }}">
     {% if show_header and translations and translations.title %}
     <h2 class="module-header" style="margin-bottom: 5px;">{{ translations.title }}</h2>
     {% endif %}
@@ -11,6 +12,7 @@
         <span class="clock-hm display-xl">--:--</span>{% if show_seconds %}<span class="clock-s headline-md text-dimmed">::--</span>{% endif %}{% if format == "12h" %}<span class="clock-ampm">--</span>{% endif %}
     </div>
     <div class="clock-date">Loading...</div>
+    {% if timezone_display and timezone_display != "none" %}<div class="clock-tz"></div>{% endif %}
 </div>
 
 <script>
@@ -30,6 +32,28 @@
     const sEl = container.querySelector('.clock-s');
     const ampmEl = container.querySelector('.clock-ampm');
     const dateEl = container.querySelector('.clock-date');
+    const tzEl = container.querySelector('.clock-tz');
+    const tzDisplay = container.getAttribute('data-timezone-display') || 'none';
+    const tzCity = (timezone || '').split('/').pop().replace(/_/g, ' ');
+
+    // The zone's name (EDT) or offset (GMT-4) right now, so it follows daylight saving
+    function tzName(style) {
+        try {
+            const part = new Intl.DateTimeFormat(lang, { timeZone: timezone, timeZoneName: style })
+                .formatToParts(new Date()).find(p => p.type === 'timeZoneName');
+            return part ? part.value : '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function tzText() {
+        if (tzDisplay === 'city') return tzCity;
+        if (tzDisplay === 'abbr') return tzName('short');
+        if (tzDisplay === 'offset') return tzName('shortOffset');
+        if (tzDisplay === 'city_abbr') return [tzCity, tzName('short')].filter(Boolean).join(' · ');
+        return '';
+    }
 
     // Create datetime formatter options
     const timeOptions = {
@@ -101,6 +125,7 @@
             hmStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
+        // ponytail: seconds come from local time; every timezone offset is whole minutes, so they match any zone
         if (showSeconds) {
             sStr = ':' + String(now.getSeconds()).padStart(2, '0');
         }
@@ -147,6 +172,7 @@
         }
 
         setText(dateEl, dateStr);
+        setText(tzEl, tzText());
     }
 
     updateClock();
@@ -185,7 +211,7 @@
     padding-bottom: 4px;
 }
 
-.clock-date {
+.clock-date, .clock-tz {
     font-size: 14px;
     font-weight: 600;
     line-height: 1.0;
