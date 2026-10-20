@@ -143,3 +143,19 @@ def test_an_invalid_timezone_still_shows_a_time(show):
     for style in ("classic", "station"):
         page = show(render(style=style, timezone="Mars/Olympus_Mons"))
         assert page.locator(".clock-container").last.locator(".clock-date").first.text_content()
+
+
+def test_while_a_video_plays_the_seconds_go_and_it_ticks_on_the_minute(show):
+    """The core puts data-video-is-playing on the module's host and fires mirrordash:video_is_playing."""
+    page = show(render(style="station"))
+    playing = """on => { document.body.lastElementChild.toggleAttribute('data-video-is-playing', on);
+                        dispatchEvent(new CustomEvent('mirrordash:video_is_playing', { detail: { playing: on } })); }"""
+    page.evaluate(playing, True)
+    assert page.locator(".hand-s").is_hidden()
+    assert page.locator(".hand-m").get_attribute("transform") == "rotate(282)"  # 47 min, the seconds left out
+    page.evaluate(playing, False)
+    assert page.locator(".hand-s").is_visible()
+    assert page.locator(".hand-m").get_attribute("transform") == "rotate(284)"
+    page = show(render(style="classic"))
+    page.evaluate(playing, True)
+    assert page.locator(".clock-s").is_hidden() and page.locator(".clock-hm").text_content() == "15:47"

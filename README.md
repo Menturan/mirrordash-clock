@@ -7,7 +7,7 @@ Clock and date widget with 12h/24h formatting, localizations, and sleek layout s
 - Its own timezone per clock (empty uses the mirror's), optionally shown as city, abbreviation or offset.
 - Displays current time and date in customizable formats.
 - Supports 12-hour or 24-hour modes.
-- Show/hide seconds toggle.
+- Show/hide seconds toggle. While a video plays on the mirror, the seconds hide and the clock ticks once a minute, so the video stays smooth.
 - Fully localized (Swedish and English) for day/month names.
 - Clean HUD design.
 

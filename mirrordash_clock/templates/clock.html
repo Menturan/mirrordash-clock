@@ -187,6 +187,8 @@
     const svg = container.querySelector('.clock-face');
     const moveHands = svg && FACES[style] ? FACES[style](svg) : null;
     const fill = container.querySelector('.clock-fill');
+    // The core puts this on our host while a module plays a video (MODULE_GUIDE: while a video plays)
+    const videoIsPlaying = () => root.host.hasAttribute('data-video-is-playing');
 
     function updateClock() {
         const now = new Date();
@@ -197,7 +199,7 @@
         const h24 = Number(part(clockParts, 'hour')) % 24;
         const min = Number(part(clockParts, 'minute'));
         // ponytail: seconds come from local time; every timezone offset is whole minutes, so they match any zone
-        const sec = now.getSeconds();
+        const sec = videoIsPlaying() ? 0 : now.getSeconds();
 
         setAll('.clock-hm', `${hour}:${minute}`);
         setAll('.clock-h', hour);
@@ -223,14 +225,33 @@
         if (moveHands) moveHands((h24 % 12) * 30 + min * 0.5, min * 6 + sec * 0.1, sec * 6);
     }
 
-    updateClock();
-    // Tick every second only when something shows the seconds
+    // Tick every second only when something shows the seconds; while a video plays on the mirror, once a
+    // minute on the minute with the seconds hidden (the CSS), when the core sends its updates too
     const showsSeconds = showSeconds && (style === 'classic' || style === 'secline' || moveHands);
-    root._clockTimer = setInterval(updateClock, showsSeconds ? 1000 : 10000);
+    function tick() {
+        clearInterval(root._clockTimer);
+        updateClock();
+        if (!videoIsPlaying()) {
+            root._clockTimer = setInterval(updateClock, showsSeconds ? 1000 : 10000);
+            return;
+        }
+        const onTheMinute = () => { updateClock(); root._clockTimer = setTimeout(onTheMinute, 60000 - Date.now() % 60000); };
+        root._clockTimer = setTimeout(onTheMinute, 60000 - Date.now() % 60000);
+    }
+    tick();
+    removeEventListener('mirrordash:video_is_playing', root._onVideo);
+    root._onVideo = tick;
+    addEventListener('mirrordash:video_is_playing', tick);
 })();
 </script>
 
 <style>
+/* While a video plays the clock shows hours and minutes only (the script ticks once a minute) */
+:host([data-video-is-playing]) .clock-s,
+:host([data-video-is-playing]) .clock-track,
+:host([data-video-is-playing]) .hand-s {
+    display: none;
+}
 .clock-container {
     display: flex;
     flex-direction: column;
