@@ -23,4 +23,4 @@ Developing it: `uv run pytest` runs its tests (the looks run in WebKit: `uv run 
 ![Clock Widget Screenshot](screenshot.png)
 
 ## License
-[PolyForm Noncommercial License 1.0.0](LICENSE.md)
+[MIT](LICENSE)
