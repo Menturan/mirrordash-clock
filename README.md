@@ -16,7 +16,7 @@ Clock and date widget with 12h/24h formatting, localizations, and sleek layout s
 On the mirror's admin page, open **Modules**: the module is in the list, install it with one click.
 Or paste `git+https://github.com/Menturan/mirrordash-clock.git` under **Modules → Install a Module from GitHub**.
 
-Developing it: `uv run pytest` runs its tests (the looks run in WebKit: `uv run playwright install webkit` once), and `uvx mirrordash-sdk validate .` checks it.
+Developing it: `uv run pytest` runs its tests (the looks run in WebKit: `uv run playwright install webkit` once; on Linux `uv run playwright install --with-deps webkit`, which asks for sudo for the system libraries WebKit needs), and `uvx mirrordash-sdk validate .` checks it.
 
 ## Screenshot
 
