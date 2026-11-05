@@ -21,7 +21,8 @@
             "type": "boolean",
             "default": true,
             "title": "Show Seconds",
-            "description": "Display active ticking seconds beside the hour and minutes."
+            "description": "Display active ticking seconds beside the hour and minutes.",
+            "show_if": {"style": ["classic", "secline", "analog-minimal", "station", "dots", "rings"]}
         },
         "show_header": {
             "type": "boolean",
@@ -34,7 +35,8 @@
             "default": "full",
             "enum": ["full", "long", "medium", "short", "yyyy-MM-dd"],
             "title": "Date Format",
-            "description": "Localized date format style (full, long, medium, short) or a custom pattern."
+            "description": "Localized date format style (full, long, medium, short) or a custom pattern.",
+            "show_if": {"style": ["classic", "stacked", "words", "secline", "analog-minimal", "station", "dots", "rings"]}
         },
         "timezone": {
             "type": "string",
