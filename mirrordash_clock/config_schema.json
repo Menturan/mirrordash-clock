@@ -15,7 +15,8 @@
             "default": "24h",
             "enum": ["12h", "24h"],
             "title": "Time Format",
-            "description": "Display time in 12-hour (AM/PM) or 24-hour clock format."
+            "description": "Display time in 12-hour (AM/PM) or 24-hour clock format.",
+            "enum_titles": ["12-hour (AM/PM)", "24-hour"]
         },
         "show_seconds": {
             "type": "boolean",
@@ -36,7 +37,8 @@
             "enum": ["full", "long", "medium", "short", "yyyy-MM-dd"],
             "title": "Date Format",
             "description": "Localized date format style (full, long, medium, short) or a custom pattern.",
-            "show_if": {"style": ["classic", "stacked", "words", "secline", "analog-minimal", "station", "dots", "rings"]}
+            "show_if": {"style": ["classic", "stacked", "words", "secline", "analog-minimal", "station", "dots", "rings"]},
+            "enum_titles": ["Full", "Long", "Medium", "Short", "2026-11-05"]
         },
         "timezone": {
             "type": "string",
