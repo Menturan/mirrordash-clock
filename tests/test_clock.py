@@ -29,7 +29,8 @@ async def test_clock_module_render():
         timezone="Europe/Stockholm",
         timezone_display="none",
         date_format="full",
-        show_header=True
+        show_header=True,
+        size=100
     )
 
 
@@ -40,3 +41,15 @@ def test_clock_own_timezone_wins_over_system():
     assert clock.timezone_display == "city_abbr"
     # An empty field (the schema default) falls back to the system's timezone
     assert ClockModule({"globals": {"timezone": "Europe/Stockholm"}, "timezone": ""}).timezone_name == "Europe/Stockholm"
+
+
+@pytest.mark.parametrize("given,expected", [(None, 100), (100, 100), (150, 150), (10, 50), (500, 200), ("80", 80),
+                                            ("abc", 100), (None, 100), ([], 100), (float("inf"), 100), (120.7, 120)])
+def test_clock_size_is_clamped_and_defaults_to_100(given, expected):
+    config = {} if given is None else {"size": given}
+    clock = ClockModule(config)
+    assert clock.size == expected
+    clock.render_template = MagicMock(return_value="")
+    import asyncio
+    asyncio.run(clock.render())
+    assert clock.render_template.call_args.kwargs["size"] == expected

@@ -2,6 +2,7 @@
 {% set analog = style in ["analog-minimal", "station", "dots", "rings"] %}
 {% macro ampm() %}{% if format == "12h" %}<span class="clock-ampm">--</span>{% endif %}{% endmacro %}
 <div class="clock-container clock-style-{{ style }}{% if analog %} clock-analog{% endif %}" id="clock-module-container"
+     style="--clock-scale: {{ (size or 100) / 100 }}"
      data-style="{{ style }}"
      data-format="{{ format }}"
      data-show-seconds="{{ show_seconds|lower }}"
@@ -266,35 +267,42 @@
     align-items: baseline;
 }
 
-/* The time is .display-xl and the seconds .headline-md .text-dimmed (modules.css) */
+/* The time is .display-xl and the seconds .headline-md .text-dimmed (modules.css); their sizes
+   are set again here so the whole clock scales with --clock-scale (the header does not) */
+.clock-container .display-xl {
+    font-size: calc(75px * var(--clock-scale, 1));
+}
+.clock-container .headline-md {
+    font-size: calc(32px * var(--clock-scale, 1));
+}
 .clock-s {
-    margin-left: 2px;
+    margin-left: calc(2px * var(--clock-scale, 1));
 }
 
 .clock-ampm {
-    font-size: 20px;
+    font-size: calc(20px * var(--clock-scale, 1));
     font-weight: 500;
     line-height: 1.2;
     letter-spacing: 0.05em;
     color: var(--color-standard-gray, #999999);
-    margin-left: 6px;
+    margin-left: calc(6px * var(--clock-scale, 1));
     align-self: flex-end;
-    padding-bottom: 4px;
+    padding-bottom: calc(4px * var(--clock-scale, 1));
 }
 
 .clock-date, .clock-tz {
-    font-size: 14px;
+    font-size: calc(14px * var(--clock-scale, 1));
     font-weight: 600;
     line-height: 1.0;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--color-standard-gray, #999999);
-    margin-top: var(--label-gap, 8px);
+    margin-top: calc(var(--label-gap, 8px) * var(--clock-scale, 1));
 }
 
 /* --- minimal: only the time, larger and thinner --- */
 .clock-huge {
-    font-size: 112px;
+    font-size: calc(112px * var(--clock-scale, 1));
     font-weight: 100;
     line-height: 1;
     letter-spacing: -0.05em;
@@ -308,7 +316,7 @@
     align-items: flex-end;
 }
 .clock-h, .clock-m {
-    font-size: 104px;
+    font-size: calc(104px * var(--clock-scale, 1));
     font-weight: 100;
     line-height: 0.88;
     letter-spacing: -0.05em;
@@ -319,37 +327,37 @@
 }
 .clock-style-stacked .clock-ampm {
     align-self: flex-end;
-    margin-top: 6px;
+    margin-top: calc(6px * var(--clock-scale, 1));
 }
 
 /* --- words: the time as it is said --- */
 .clock-w-lead {
-    font-size: 26px;
+    font-size: calc(26px * var(--clock-scale, 1));
     font-weight: 300;
     color: var(--color-standard-gray, #999999);
 }
 .clock-w-hour {
-    font-size: 64px;
+    font-size: calc(64px * var(--clock-scale, 1));
     font-weight: 200;
     line-height: 1;
     letter-spacing: -0.03em;
     color: var(--color-high-contrast, #ffffff);
 }
 .clock-style-words .clock-date.clock-hm {
-    margin-top: 12px;
+    margin-top: calc(12px * var(--clock-scale, 1));
 }
 
 /* --- dayfirst: the weekday large, the time small --- */
 .clock-weekday {
-    font-size: 64px;
+    font-size: calc(64px * var(--clock-scale, 1));
     font-weight: 200;
     line-height: 1;
     letter-spacing: -0.03em;
     color: var(--color-high-contrast, #ffffff);
 }
 .clock-rest {
-    margin-top: 10px;
-    font-size: 20px;
+    margin-top: calc(10px * var(--clock-scale, 1));
+    font-size: calc(20px * var(--clock-scale, 1));
     color: var(--color-standard-gray, #999999);
 }
 .clock-rest .clock-hm {
@@ -358,7 +366,7 @@
 .clock-rest .clock-ampm {
     font-size: inherit;
     padding: 0;
-    margin-left: 4px;
+    margin-left: calc(4px * var(--clock-scale, 1));
 }
 
 /* --- secline: the seconds as a line filling over the minute --- */
@@ -371,7 +379,7 @@
 .clock-track {
     position: relative;
     height: 1px;
-    margin-top: 10px;
+    margin-top: calc(10px * var(--clock-scale, 1));
     /* ponytail: a faint track, not a token; a lit pixel this dark barely shows through the glass */
     background: #1f1f1f;
 }
@@ -395,8 +403,8 @@
     align-self: stretch;
 }
 .clock-face {
-    width: 200px;
-    height: 200px;
+    width: calc(200px * var(--clock-scale, 1));
+    height: calc(200px * var(--clock-scale, 1));
     overflow: visible;
 }
 .clock-face line, .clock-face .ring {
@@ -419,6 +427,6 @@
     letter-spacing: -1px;
 }
 .clock-analog > .clock-date {
-    margin-top: 18px;
+    margin-top: calc(18px * var(--clock-scale, 1));
 }
 </style>

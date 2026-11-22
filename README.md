@@ -4,6 +4,7 @@ Clock and date widget with 12h/24h formatting, localizations, and sleek layout s
 
 ## Features
 - Ten looks: Classic (the default), Minimal, Stacked, Words ("kvart över tre"), Weekday first, Seconds line, and the analog Hands only, Bold markers, Dots and Rings.
+- Size setting (50-200 %) scales the whole clock, header excepted.
 - Its own timezone per clock (empty uses the mirror's), optionally shown as city, abbreviation or offset.
 - Displays current time and date in customizable formats.
 - Supports 12-hour or 24-hour modes.

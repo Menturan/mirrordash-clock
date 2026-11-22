@@ -11,6 +11,10 @@ class ClockModule:
 
         # Fallback format: check instance config first, then global config
         self.format = config.get("format") or global_cfg.get("time_format", "24h")
+        try:
+            self.size = max(50, min(200, int(config.get("size", 100))))
+        except (TypeError, ValueError, OverflowError):
+            self.size = 100
         self.show_seconds = config.get("show_seconds", True)
         self.show_header = config.get("show_header", True)
         
@@ -36,5 +40,6 @@ class ClockModule:
             timezone=self.timezone_name,
             timezone_display=self.timezone_display,
             date_format=self.date_format,
-            show_header=self.show_header
+            show_header=self.show_header,
+            size=self.size
         )

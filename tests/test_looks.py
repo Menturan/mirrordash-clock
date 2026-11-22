@@ -47,7 +47,7 @@ def render(lang="sv", **config):
     read = lambda name: json.loads((PKG / "translations" / name).read_text())
     env = Environment(loader=FileSystemLoader(PKG / "templates"), autoescape=select_autoescape(["html", "xml"]))
     context = dict(style="classic", format="24h", show_seconds=True, lang=lang, timezone="Europe/Stockholm",
-                   timezone_display="none", date_format="full", show_header=True,
+                   timezone_display="none", date_format="full", show_header=True, size=100,
                    translations=read("en.json") | read(f"{lang}.json"))
     return env.get_template("clock.html").render(**(context | config))
 
@@ -159,3 +159,27 @@ def test_while_a_video_plays_the_seconds_go_and_it_ticks_on_the_minute(show):
     page = show(render(style="classic"))
     page.evaluate(playing, True)
     assert page.locator(".clock-s").is_hidden() and page.locator(".clock-hm").text_content() == "15:47"
+
+
+# The core's modules.css gives .display-xl, .headline-md and .module-header their sizes; stand-ins for it here
+CORE_CSS = ".display-xl { font-size: 75px } .headline-md { font-size: 32px } .module-header { font-size: 14px }"
+MEASURE = """sel => {
+    const el = document.body.lastElementChild.shadowRoot.querySelector(sel);
+    const cs = getComputedStyle(el);
+    return sel === '.clock-face' ? el.getBoundingClientRect().width : parseFloat(cs.fontSize);
+}"""
+
+
+@pytest.mark.parametrize("style,selector", [("classic", ".clock-hm"), ("classic", ".clock-s"), ("stacked", ".clock-h"),
+                                            ("minimal", ".clock-hm"), ("station", ".clock-face"), ("rings", ".clock-face")])
+def test_size_scales_the_clock_but_not_the_header(show, style, selector):
+    def measure(size):
+        page = show(render(style=style, size=size).replace("<style>", f"<style>{CORE_CSS}", 1))
+        return page.evaluate(MEASURE, selector), page.evaluate(MEASURE, ".module-header")
+
+    base, header = measure(100)
+    assert base > 0
+    for size in (200, 50):
+        scaled, scaled_header = measure(size)
+        assert scaled == pytest.approx(base * size / 100, abs=0.01), (style, selector, size)
+        assert scaled_header == header == 14
