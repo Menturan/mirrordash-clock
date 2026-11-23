@@ -1,5 +1,6 @@
 {
     "title": "Clock",
+    "requires_mirrordash": "0.8",
     "description": "Displays the current time and date in a premium look.",
     "properties": {
         "style": {
