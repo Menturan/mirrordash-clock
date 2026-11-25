@@ -11,7 +11,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from playwright.sync_api import sync_playwright
 
 PKG = Path(__file__).parent.parent / "mirrordash_clock"
-STYLES = json.loads((PKG / "config_schema.json").read_text())["properties"]["style"]["enum"]
+STYLES = json.loads((PKG / "config_schema.json").read_text())["properties"]["layout"]["enum"]
 NOW = datetime(2026, 10, 12, 13, 47, 20, tzinfo=timezone.utc)  # Monday 15:47:20 in Stockholm (CEST)
 
 # What each look shows at NOW, in Swedish
@@ -46,8 +46,8 @@ def render(lang="sv", **config):
     """clock.html with the same context plugin.py and the mirror's loader give it."""
     read = lambda name: json.loads((PKG / "translations" / name).read_text())
     env = Environment(loader=FileSystemLoader(PKG / "templates"), autoescape=select_autoescape(["html", "xml"]))
-    context = dict(style="classic", format="24h", show_seconds=True, lang=lang, timezone="Europe/Stockholm",
-                   timezone_display="none", date_format="full", show_header=True, size=100,
+    context = dict(layout="classic", format="24h", show_seconds=True, lang=lang, timezone="Europe/Stockholm",
+                   timezone_display="none", date_format="full", show_header=True, heading="", size=100,
                    translations=read("en.json") | read(f"{lang}.json"))
     return env.get_template("clock.html").render(**(context | config))
 
@@ -83,7 +83,7 @@ def test_every_look_is_tested():
 
 @pytest.mark.parametrize("style", STYLES)
 def test_each_look_shows_the_time(show, style):
-    page = show(render(style=style))
+    page = show(render(layout=style))
     assert page.locator(".clock-container").get_attribute("data-style") == style
     for selector, text in TEXTS.get(style, {}).items():
         assert page.locator(selector).first.text_content() == text, selector
@@ -93,30 +93,30 @@ def test_each_look_shows_the_time(show, style):
 
 
 def test_an_unknown_look_falls_back_to_classic(show):
-    page = show(render(style=None))
+    page = show(render(layout=None))
     assert page.locator(".clock-container").get_attribute("data-style") == "classic"
     assert page.locator(".clock-s").text_content() == ":20"
 
 
 def test_words_round_to_the_next_hour(show):
-    page = show(render(style="words"), now=datetime(2026, 10, 12, 13, 58, 0, tzinfo=timezone.utc))
+    page = show(render(layout="words"), now=datetime(2026, 10, 12, 13, 58, 0, tzinfo=timezone.utc))
     assert page.locator(".clock-w-lead").text_content() == "Klockan är"
     assert page.locator(".clock-w-hour").text_content() == "fyra"
 
 
 def test_words_in_english(show):
-    page = show(render(lang="en", style="words"))
+    page = show(render(lang="en", layout="words"))
     assert page.locator(".clock-w-lead").text_content() == "Quarter to"
     assert page.locator(".clock-w-hour").text_content() == "four"
 
 
 def test_seconds_line_fills_over_the_minute(show):
-    page = show(render(style="secline"))
+    page = show(render(layout="secline"))
     assert page.locator(".clock-fill").evaluate("el => el.style.width") == "33.9%"  # 20 of 59 s
 
 
 def test_rings_fill_to_the_time(show):
-    page = show(render(style="rings"))
+    page = show(render(layout="rings"))
     dashes = [float(a.get_attribute("stroke-dasharray").split()[0]) for a in page.locator(".ring").all()]
     # Seconds 120°, minutes 284°, hours 113.5° of rings with radius 92, 80 and 68
     assert dashes == pytest.approx([2 * 3.14159265 * r * deg / 360 for r, deg in ((92, 120), (80, 284), (68, 113.5))])
@@ -124,7 +124,7 @@ def test_rings_fill_to_the_time(show):
 
 def test_without_seconds_nothing_shows_them(show):
     for style, selector in (("classic", ".clock-s"), ("station", ".hand-s"), ("dots", ".hand-s"), ("secline", ".clock-fill")):
-        assert show(render(style=style, show_seconds=False)).locator(selector).count() == 0, style
+        assert show(render(layout=style, show_seconds=False)).locator(selector).count() == 0, style
 
 
 def test_twelve_hour_clock(show):
@@ -141,13 +141,13 @@ def test_own_timezone_shifts_the_time_and_names_it(show):
 
 def test_an_invalid_timezone_still_shows_a_time(show):
     for style in ("classic", "station"):
-        page = show(render(style=style, timezone="Mars/Olympus_Mons"))
+        page = show(render(layout=style, timezone="Mars/Olympus_Mons"))
         assert page.locator(".clock-container").last.locator(".clock-date").first.text_content()
 
 
 def test_while_a_video_plays_the_seconds_go_and_it_ticks_on_the_minute(show):
     """The core puts data-video-is-playing on the module's host and fires mirrordash:video_is_playing."""
-    page = show(render(style="station"))
+    page = show(render(layout="station"))
     playing = """on => { document.body.lastElementChild.toggleAttribute('data-video-is-playing', on);
                         dispatchEvent(new CustomEvent('mirrordash:video_is_playing', { detail: { playing: on } })); }"""
     page.evaluate(playing, True)
@@ -156,7 +156,7 @@ def test_while_a_video_plays_the_seconds_go_and_it_ticks_on_the_minute(show):
     page.evaluate(playing, False)
     assert page.locator(".hand-s").is_visible()
     assert page.locator(".hand-m").get_attribute("transform") == "rotate(284)"
-    page = show(render(style="classic"))
+    page = show(render(layout="classic"))
     page.evaluate(playing, True)
     assert page.locator(".clock-s").is_hidden() and page.locator(".clock-hm").text_content() == "15:47"
 
@@ -174,7 +174,7 @@ MEASURE = """sel => {
                                             ("minimal", ".clock-hm"), ("station", ".clock-face"), ("rings", ".clock-face")])
 def test_size_scales_the_clock_but_not_the_header(show, style, selector):
     def measure(size):
-        page = show(render(style=style, size=size).replace("<style>", f"<style>{CORE_CSS}", 1))
+        page = show(render(layout=style, size=size).replace("<style>", f"<style>{CORE_CSS}", 1))
         return page.evaluate(MEASURE, selector), page.evaluate(MEASURE, ".module-header")
 
     base, header = measure(100)
@@ -183,3 +183,15 @@ def test_size_scales_the_clock_but_not_the_header(show, style, selector):
         scaled, scaled_header = measure(size)
         assert scaled == pytest.approx(base * size / 100, abs=0.01), (style, selector, size)
         assert scaled_header == header == 14
+
+
+def test_heading_text_replaces_the_title(show):
+    assert show(render(lang="en", heading="My clock")).locator(".module-header").inner_text() == "My clock"
+
+
+def test_the_title_shows_without_a_heading_text(show):
+    assert show(render(lang="en")).locator(".module-header").inner_text() == "Clock"
+
+
+def test_show_header_off_hides_the_heading(show):
+    assert show(render(show_header=False)).locator(".module-header").count() == 0

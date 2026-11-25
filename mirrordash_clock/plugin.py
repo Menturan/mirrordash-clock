@@ -7,16 +7,15 @@ class ClockModule:
         self.config = config
         self.name = "mirrordash_clock"
         global_cfg = config.get("globals", {})
-        self.style = config.get("style", "classic")
+        self.layout = config.get("layout", "classic")
 
-        # Fallback format: check instance config first, then global config
+        # 12/24 h and time zone: the clock's own choice, else the mirror's (blank = follow the mirror)
         self.format = config.get("format") or global_cfg.get("time_format", "24h")
         try:
             self.size = max(50, min(200, int(config.get("size", 100))))
         except (TypeError, ValueError, OverflowError):
             self.size = 100
         self.show_seconds = config.get("show_seconds", True)
-        self.show_header = config.get("show_header", True)
         
         # Localization and custom date layout
         self.lang = global_cfg.get("language", "en")
@@ -33,13 +32,12 @@ class ClockModule:
         """The clock's container: the page ticks the time itself, so the same HTML each round (never resent)."""
         return self.render_template(
             "clock.html",
-            style=self.style,
+            layout=self.layout,
             format=self.format,
             show_seconds=self.show_seconds,
             lang=self.lang,
             timezone=self.timezone_name,
             timezone_display=self.timezone_display,
             date_format=self.date_format,
-            show_header=self.show_header,
             size=self.size
         )

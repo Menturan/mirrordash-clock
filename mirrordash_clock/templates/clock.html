@@ -1,33 +1,33 @@
-{% set style = style or "classic" %}
-{% set analog = style in ["analog-minimal", "station", "dots", "rings"] %}
+{% set layout = layout or "classic" %}
+{% set analog = layout in ["analog-minimal", "station", "dots", "rings"] %}
 {% macro ampm() %}{% if format == "12h" %}<span class="clock-ampm">--</span>{% endif %}{% endmacro %}
-<div class="clock-container clock-style-{{ style }}{% if analog %} clock-analog{% endif %}" id="clock-module-container"
+<div class="clock-container clock-style-{{ layout }}{% if analog %} clock-analog{% endif %}" id="clock-module-container"
      style="--clock-scale: {{ (size or 100) / 100 }}"
-     data-style="{{ style }}"
+     data-style="{{ layout }}"
      data-format="{{ format }}"
      data-show-seconds="{{ show_seconds|lower }}"
      data-lang="{{ lang }}"
      data-timezone="{{ timezone }}"
      data-date-format="{{ date_format }}"
      data-timezone-display="{{ timezone_display }}">
-    {% if show_header and translations and translations.title %}
-    <h2 class="module-header" style="margin-bottom: 5px;">{{ translations.title }}</h2>
+    {% if show_header %}
+    <h2 class="module-header" style="margin-bottom: 5px;">{{ heading or translations.title }}</h2>
     {% endif %}
-    {% if style == "minimal" %}
+    {% if layout == "minimal" %}
     <div class="clock-time"><span class="clock-hm clock-huge">--:--</span>{{ ampm() }}</div>
-    {% elif style == "stacked" %}
+    {% elif layout == "stacked" %}
     <div class="clock-stack"><span class="clock-h">--</span><span class="clock-m">--</span></div>
     {{ ampm() }}
     <div class="clock-date"></div>
-    {% elif style == "words" %}
+    {% elif layout == "words" %}
     <span class="clock-w-lead"></span>
     <span class="clock-w-hour"></span>
     <span class="clock-date clock-hm">--:--</span>
     <div class="clock-date"></div>
-    {% elif style == "dayfirst" %}
+    {% elif layout == "dayfirst" %}
     <span class="clock-weekday"></span>
     <span class="clock-rest"><span class="clock-daymonth"></span> · <span class="clock-hm">--:--</span>{{ ampm() }}</span>
-    {% elif style == "secline" %}
+    {% elif layout == "secline" %}
     <div class="clock-time"><span class="clock-hm display-xl">--:--</span>{{ ampm() }}</div>
     {% if show_seconds %}<div class="clock-track"><div class="clock-fill"></div></div>{% endif %}
     <div class="clock-date"></div>
@@ -404,7 +404,9 @@
 }
 .clock-face {
     width: calc(200px * var(--clock-scale, 1));
-    height: calc(200px * var(--clock-scale, 1));
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1;
     overflow: visible;
 }
 .clock-face line, .clock-face .ring {

@@ -22,14 +22,13 @@ async def test_clock_module_render():
     assert await clock.render() == "<div>Clock Rendered</div>"
     clock.render_template.assert_called_once_with(
         "clock.html",
-        style="classic",
+        layout="classic",
         format="24h",
         show_seconds=False,
         lang="sv",
         timezone="Europe/Stockholm",
         timezone_display="none",
         date_format="full",
-        show_header=True,
         size=100
     )
 
@@ -53,3 +52,11 @@ def test_clock_size_is_clamped_and_defaults_to_100(given, expected):
     import asyncio
     asyncio.run(clock.render())
     assert clock.render_template.call_args.kwargs["size"] == expected
+
+
+def test_blank_format_and_timezone_follow_the_mirror():
+    mirror = {"time_format": "12h", "timezone": "Europe/London"}
+    clock = ClockModule({"globals": mirror, "format": "", "timezone": ""})
+    assert (clock.format, clock.timezone_name) == ("12h", "Europe/London")
+    # An own choice wins over the mirror's
+    assert ClockModule({"globals": mirror, "format": "24h"}).format == "24h"

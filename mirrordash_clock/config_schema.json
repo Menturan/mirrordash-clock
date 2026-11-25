@@ -1,9 +1,9 @@
 {
     "title": "Clock",
-    "requires_mirrordash": "0.8",
+    "requires_mirrordash": "0.21",
     "description": "Displays the current time and date in a premium look.",
     "properties": {
-        "style": {
+        "layout": {
             "type": "string",
             "default": "classic",
             "enum": ["classic", "minimal", "stacked", "words", "dayfirst", "secline", "analog-minimal", "station", "dots", "rings"],
@@ -14,56 +14,51 @@
         "size": {
             "type": "integer",
             "format": "slider",
-            "title": "Size (%)",
+            "title": "Size",
             "description": "How large the clock is. Scales the time, date, timezone and dial together; the header keeps its size.",
             "default": 100,
+            "unit": "%",
             "minimum": 50,
             "maximum": 200,
             "step": 10
         },
         "format": {
             "type": "string",
-            "default": "24h",
-            "enum": ["12h", "24h"],
-            "title": "Time Format",
-            "description": "Display time in 12-hour (AM/PM) or 24-hour clock format.",
-            "enum_titles": ["12-hour (AM/PM)", "24-hour"]
+            "default": "",
+            "enum": ["", "12h", "24h"],
+            "title": "Time format",
+            "description": "12-hour (AM/PM) or 24-hour clock. Follow the mirror uses the mirror's own setting.",
+            "enum_titles": ["Follow the mirror", "12-hour (AM/PM)", "24-hour"]
         },
         "show_seconds": {
             "type": "boolean",
             "default": true,
-            "title": "Show Seconds",
+            "title": "Show seconds",
             "description": "Display active ticking seconds beside the hour and minutes.",
-            "show_if": {"style": ["classic", "secline", "analog-minimal", "station", "dots", "rings"]}
-        },
-        "show_header": {
-            "type": "boolean",
-            "default": true,
-            "title": "Show Header",
-            "description": "Show or hide the module's header/title."
+            "show_if": {"layout": ["classic", "secline", "analog-minimal", "station", "dots", "rings"]}
         },
         "date_format": {
             "type": "string",
             "default": "full",
             "enum": ["full", "long", "medium", "short", "yyyy-MM-dd"],
-            "title": "Date Format",
+            "title": "Date format",
             "description": "Localized date format style (full, long, medium, short) or a custom pattern.",
-            "show_if": {"style": ["classic", "stacked", "words", "secline", "analog-minimal", "station", "dots", "rings"]},
+            "show_if": {"layout": ["classic", "stacked", "words", "secline", "analog-minimal", "station", "dots", "rings"]},
             "enum_titles": ["Full", "Long", "Medium", "Short", "2026-11-05"]
         },
         "timezone": {
             "type": "string",
             "default": "",
-            "title": "Timezone",
-            "description": "Show the time in another timezone (e.g. America/New_York). Empty uses the system timezone."
+            "title": "Time zone",
+            "description": "Show the time in another time zone (e.g. America/New_York). Blank follows the mirror."
         },
         "timezone_display": {
             "type": "string",
             "default": "none",
             "enum": ["none", "city", "abbr", "offset", "city_abbr"],
             "enum_titles": ["Hidden", "City (New York)", "Abbreviation (EDT)", "Offset (GMT-4)", "City and abbreviation"],
-            "title": "Show Timezone",
-            "description": "Show which timezone the clock is in, below the date."
+            "title": "Show time zone",
+            "description": "Show which time zone the clock is in, below the date."
         }
     }
 }
